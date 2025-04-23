@@ -251,7 +251,7 @@
                             <label for="method" class="form-label">Pilih Metode</label>
                             <select class="form-select" id="method" required>
                                 <option value="bisection">Metode Bisection</option>
-                                <option value="regulafalsi">Metode Regula Falsi</option>
+                                <option value="regulafalsi">Metode Regulafalsi</option>
                                 <option value="newton">Metode Newton</option>
                                 <option value="secant">Metode Secant</option>
                             </select>
@@ -289,13 +289,13 @@
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <label for="rf-x0" class="form-label">
-                                        <i class="bi bi-arrow-left-circle"></i> Batas Bawah (a)
+                                        <i class="bi bi-arrow-left-circle"></i> Batas Bawah (xₙ)
                                     </label>
                                     <input type="number" class="form-control" id="rf-x0" step="any">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="rf-x1" class="form-label">
-                                        <i class="bi bi-arrow-right-circle"></i> Batas Atas (b)
+                                        <i class="bi bi-arrow-right-circle"></i> Batas Atas (xₙ₊₁)
                                     </label>
                                     <input type="number" class="form-control" id="rf-x1" step="any">
                                 </div>
@@ -383,13 +383,13 @@
                                     <div class="mb-3">
                                         <strong class="text-primary">1. Rumus Regula Falsi:</strong>
                                         <div class="ms-3 mt-1">
-                                            xᵢ = b - f(b)(b - a)/(f(b) - f(a))
+                                            xᵢ = xₙ₊₁ - f(xₙ₊₁)(xₙ₊₁ - xₙ)/(f(xₙ₊₁) - f(xₙ))
                                         </div>
                                     </div>
                                     <div class="mb-3">
                                         <strong class="text-primary">2. Syarat Khusus:</strong>
                                         <div class="ms-3 mt-1">
-                                            • f(a) × f(b) < 0
+                                            • f(xₙ) × f(xₙ₊₁) < 0
                                         </div>
                                     </div>
                                     <div>
@@ -584,7 +584,7 @@
                             <strong>xᵢ = </strong>${result.root.toFixed(6)}
                         </div>
                         <div class="col-sm-4">
-                            <strong>f(xᵢ) = </strong>${lastIteration['f(c)'].toFixed(6)}
+                            <strong>f(xᵢ) = </strong>${lastIteration['f(c)'] ? lastIteration['f(c)'].toFixed(6) : lastIteration['f(xt)'].toFixed(6)}
                         </div>
                         <div class="col-sm-4">
                             <strong>Jumlah Iterasi = </strong>${result.iterations.length}
@@ -594,9 +594,8 @@
 
                 <div class="calculation-steps">
                     <h5 class="mb-3"><i class="bi bi-list-check me-2"></i>Hasil Perhitungan Iterasi:</h5>
-                    
                     <div class="steps-container">
-            `;
+                    `;
 
             result.iterations.forEach((iter, index) => {
                 resultHTML += `
@@ -642,13 +641,21 @@
                             </p>
                             <p class="mb-2">
                                 <strong>2. Nilai Tengah:</strong><br>
-                                xₜ = ${iter.xt.toFixed(6)}
+                                xₜ = (${iter.xn1.toFixed(6)} - ${iter['f(xn1)'].toFixed(6)}(${iter.xn1.toFixed(6)} - ${iter.xn.toFixed(6)})/(${iter['f(xn1)'].toFixed(6)} - ${iter['f(xn)'].toFixed(6)})) = ${iter.xt.toFixed(6)}
                             </p>
                             <p class="mb-2">
                                 <strong>3. Nilai Fungsi:</strong><br>
-                                f(xₙ) = ${iter['f(xn)'].toFixed(6)}<br>
-                                f(xₙ₊₁) = ${iter['f(xn1)'].toFixed(6)}<br>
-                                f(xₜ) = ${iter['f(xt)'].toFixed(6)}
+                                f(xₙ) = (${originalFunction.replace(/x/g, '(' + iter.xn.toFixed(6) + ')')}) = ${iter['f(xn)'].toFixed(6)}<br>
+                                f(xₙ₊₁) = (${originalFunction.replace(/x/g, '(' + iter.xn1.toFixed(6) + ')')}) = ${iter['f(xn1)'].toFixed(6)}<br>
+                                f(xₜ) = (${originalFunction.replace(/x/g, '(' + iter.xt.toFixed(6) + ')')}) = ${iter['f(xt)'].toFixed(6)}
+                            </p>
+                            <p class="mb-2">
+                                <strong>4. Pengecekan Interval Baru:</strong><br>
+                                f(xₙ) × f(xₜ) = ${iter['f(xn)'].toFixed(6)} × ${iter['f(xt)'].toFixed(6)} = ${(iter['f(xn)'] * iter['f(xt)']).toFixed(6)}<br>
+                                ${(iter['f(xn)'] * iter['f(xt)']) < 0 ? 
+                                    `<span class="text-info">Karena hasil < 0, maka xₙ₊₁ = xₜ</span>` : 
+                                    `<span class="text-info">Karena hasil > 0, maka xₙ = xₜ</span>`
+                                }
                             </p>
                         `;
                         break;
@@ -712,16 +719,16 @@
                         `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
                         `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
                 case 'regulafalsi':
-                    return `|f(xₜ)| = |${iter['f(xt)'].toFixed(6)}| ${Math.abs(iter['f(xt)']) < iter.epsilon ? 
-                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
+                    return `|f(xₜ)| = |${iter['f(xt)']?.toFixed(6) || 'undefined'}| ${iter['f(xt)'] && Math.abs(iter['f(xt)']) < iter.epsilon ? 
+                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
                         `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
                 case 'newton':
-                    return `|f(x₂)| = |${iter['f(x2)'].toFixed(6)}| ${Math.abs(iter['f(x2)']) < iter.epsilon ? 
-                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
+                    return `|f(x₂)| = |${iter['f(x2)']?.toFixed(6) || 'undefined'}| ${iter['f(x2)'] && Math.abs(iter['f(x2)']) < iter.epsilon ? 
+                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
                         `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
                 case 'secant':
-                    return `|f(x₂)| = |${iter['f(x2)'].toFixed(6)}| ${Math.abs(iter['f(x2)']) < iter.epsilon ? 
-                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
+                    return `|f(x₂)| = |${iter['f(x2)']?.toFixed(6) || 'undefined'}| ${iter['f(x2)'] && Math.abs(iter['f(x2)']) < iter.epsilon ? 
+                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
                         `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
             }
         }
