@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4361ee">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Metode Setengah Interval</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --background-color: #f8f9fa;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            background-color: var(--background-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 0.75rem 0;
+            margin-bottom: 1rem;
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        /* Tambahkan style untuk container grafik */
+        .chart-container {
+            position: relative;
+            height: 60vh;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .chart-container {
+                height: 70vh; /* Lebih tinggi di mobile untuk visibilitas lebih baik */
+            }
+
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+
+            .table-responsive {
+                font-size: 0.85rem;
+            }
+
+            .form-control {
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            .steps-container {
+                max-height: 60vh;
+            }
+
+            .section-title {
+                font-size: 1.25rem;
+            }
+
+            .alert {
+                font-size: 0.9rem;
+            }
+
+            #functionGraph {
+                min-height: 250px;
+            }
+        }
+
+        .form-control {
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            border: none;
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 3px;
+        }
+
+        #functionGraph {
+            min-height: 300px;
+            border-radius: 10px;
+        }
+
+        .results-card {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .steps-container {
+            max-height: 85vh;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-top: 1rem;
+        }
+        
+        .steps-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .steps-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .steps-container::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+        
+        .steps-container::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+
+        .step-item {
+            transition: transform 0.2s ease;
+        }
+
+        .step-item:hover {
+            transform: translateX(5px);
+        }
+
+        /* Touch-friendly styles */
+        .btn, .form-control {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Prevent text selection on buttons */
+        .btn {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Improve touch targets */
+        @media (max-width: 768px) {
+            .btn, .form-control {
+                min-height: 44px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <span class="navbar-brand">
+                <i class="bi bi-graph-up"></i> Calculator Akar Persamaan
+            </span>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="row g-4">
+            <!-- Input Form -->
+            <div class="col-md-6">
+                <div class="card p-4 h-100">
+                    <h4 class="section-title">Input Parameter</h4>
+                    <form id="calculationForm">
+                        <div class="mb-4">
+                            <label for="method" class="form-label">Pilih Metode</label>
+                            <select class="form-select" id="method" required>
+                                <option value="bisection">Metode Bisection</option>
+                                <option value="regulafalsi">Metode Regula Falsi</option>
+                                <option value="newton">Metode Newton</option>
+                                <option value="secant">Metode Secant</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="function" class="form-label">
+                                <i class="bi bi-function"></i> Fungsi f(x)
+                            </label>
+                            <input type="text" class="form-control" id="function" 
+                                   placeholder="Contoh: x^2 - 4" required>
+                            <small class="text-muted">Format: Gunakan (^) untuk perpangkatan dan (*) untuk perkalian</small>
+                        </div>
+
+                        <!-- Bisection Method Inputs -->
+                        <div id="bisection-inputs" class="method-inputs">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="x0" class="form-label">
+                                        <i class="bi bi-arrow-left-circle"></i> Batas Bawah (xₙ)
+                                    </label>
+                                    <input type="number" class="form-control" id="x0" step="any" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="x1" class="form-label">
+                                        <i class="bi bi-arrow-right-circle"></i> Batas Atas (xₙ₊₁)
+                                    </label>
+                                    <input type="number" class="form-control" id="x1" step="any" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Regula Falsi Method Inputs -->
+                        <div id="regulafalsi-inputs" class="method-inputs" style="display: none;">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="rf-x0" class="form-label">
+                                        <i class="bi bi-arrow-left-circle"></i> Batas Bawah (a)
+                                    </label>
+                                    <input type="number" class="form-control" id="rf-x0" step="any">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="rf-x1" class="form-label">
+                                        <i class="bi bi-arrow-right-circle"></i> Batas Atas (b)
+                                    </label>
+                                    <input type="number" class="form-control" id="rf-x1" step="any">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Newton Method Inputs -->
+                        <div id="newton-inputs" class="method-inputs" style="display: none;">
+                            <div class="mb-4">
+                                <label for="newton-x0" class="form-label">
+                                    <i class="bi bi-arrow-right-circle"></i> Tebakan Awal (x₀)
+                                </label>
+                                <input type="number" class="form-control" id="newton-x0" step="any">
+                            </div>
+                        </div>
+
+                        <!-- Secant Method Inputs -->
+                        <div id="secant-inputs" class="method-inputs" style="display: none;">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="secant-x0" class="form-label">
+                                        <i class="bi bi-arrow-left-circle"></i> Tebakan Awal 1 (x₀)
+                                    </label>
+                                    <input type="number" class="form-control" id="secant-x0" step="any">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="secant-x1" class="form-label">
+                                        <i class="bi bi-arrow-right-circle"></i> Tebakan Awal 2 (x₁)
+                                    </label>
+                                    <input type="number" class="form-control" id="secant-x1" step="any">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="epsilon" class="form-label">
+                                <i class="bi bi-bullseye"></i> Toleransi (ε)
+                            </label>
+                            <input type="number" class="form-control" id="epsilon" 
+                                   step="0.00001" min="0.00001" max="1"
+                                   placeholder="Contoh: 0.00001"
+                                   value="0.0001" required>
+                            <small class="text-muted">Masukkan nilai antara 0.00001 dan 1</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mb-4">
+                            <i class="bi bi-calculator"></i> Hitung
+                        </button>
+
+                        <!-- Method-specific Requirements -->
+                        <div class="mt-2">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-info-circle me-2"></i>Rumus dan Ketentuan:
+                            </h6>
+
+                            <!-- Bisection Method Requirements -->
+                            <div id="bisection-requirements" class="method-requirements">
+                                <div class="p-3" style="background: #e3f2fd; border-radius: 10px; font-size: 0.9rem; border-left: 4px solid var(--primary-color);">
+                                    <div class="mb-3">
+                                        <strong class="text-primary">1. Rumus Titik Tengah:</strong>
+                                        <div class="ms-3 mt-1">
+                                            xᵢ = (xₙ + xₙ₊₁) / 2
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong class="text-primary">2. Syarat Pengecekan Interval:</strong>
+                                        <div class="ms-3 mt-1">
+                                            • f(xₙ) × f(xₙ₊₁) < 0<br>
+                                            • Jika f(xₙ) × f(xᵢ) < 0, maka xₙ₊₁ = xᵢ<br>
+                                            • Jika f(xₙ) × f(xᵢ) > 0, maka xₙ = xᵢ
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-primary">3. Syarat Berhenti:</strong>
+                                        <div class="ms-3 mt-1">
+                                            • |f(xᵢ)| < ε atau |xₙ₊₁ - xₙ| < ε
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Regula Falsi Method Requirements -->
+                            <div id="regulafalsi-requirements" class="method-requirements" style="display: none;">
+                                <div class="p-3" style="background: #e3f2fd; border-radius: 10px; font-size: 0.9rem; border-left: 4px solid var(--primary-color);">
+                                    <div class="mb-3">
+                                        <strong class="text-primary">1. Rumus Regula Falsi:</strong>
+                                        <div class="ms-3 mt-1">
+                                            xᵢ = b - f(b)(b - a)/(f(b) - f(a))
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong class="text-primary">2. Syarat Khusus:</strong>
+                                        <div class="ms-3 mt-1">
+                                            • f(a) × f(b) < 0
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-primary">3. Syarat Berhenti:</strong>
+                                        <div class="ms-3 mt-1">
+                                            • |f(xᵢ)| < ε
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Newton Method Requirements -->
+                            <div id="newton-requirements" class="method-requirements" style="display: none;">
+                                <div class="p-3" style="background: #e3f2fd; border-radius: 10px; font-size: 0.9rem; border-left: 4px solid var(--primary-color);">
+                                    <div class="mb-3">
+                                        <strong class="text-primary">1. Rumus Newton-Raphson:</strong>
+                                        <div class="ms-3 mt-1">
+                                            xᵢ₊₁ = xᵢ - f(xᵢ)/f'(xᵢ)
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong class="text-primary">2. Syarat Khusus:</strong>
+                                        <div class="ms-3 mt-1">
+                                            • Turunan f'(x) tersedia<br>
+                                            • f'(x) ≠ 0 di sekitar akar
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-primary">3. Syarat Berhenti:</strong>
+                                        <div class="ms-3 mt-1">
+                                            • |xᵢ₊₁ - xᵢ| < ε
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Secant Method Requirements -->
+                            <div id="secant-requirements" class="method-requirements" style="display: none;">
+                                <div class="p-3" style="background: #e3f2fd; border-radius: 10px; font-size: 0.9rem; border-left: 4px solid var(--primary-color);">
+                                    <div class="mb-3">
+                                        <strong class="text-primary">1. Rumus Secant:</strong>
+                                        <div class="ms-3 mt-1">
+                                            xᵢ₊₁ = xᵢ - f(xᵢ)(xᵢ - xᵢ₋₁)/(f(xᵢ) - f(xᵢ₋₁))
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong class="text-primary">2. Syarat Khusus:</strong>
+                                        <div class="ms-3 mt-1">
+                                            • Tidak perlu turunan<br>
+                                            • Membutuhkan dua tebakan awal
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong class="text-primary">3. Syarat Berhenti:</strong>
+                                        <div class="ms-3 mt-1">
+                                            • |xᵢ₊₁ - xᵢ| < ε
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Results -->
+            <div class="col-md-6">
+                <div class="card p-4 h-100">
+                    <h4 class="section-title">Hasil Perhitungan</h4>
+                    <div id="result">
+                        <div class="text-center text-muted">
+                            <i class="bi bi-arrow-left-circle fs-1"></i>
+                            <p class="mt-3">Masukkan parameter di sebelah kiri untuk melihat hasil</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Iteration Table -->
+        <div class="card p-4 my-4">
+            <h4 class="section-title">Tabel Iterasi</h4>
+            <div class="table-responsive">
+                <table class="table table-hover" id="iterationTable">
+                    <thead>
+                        <tr>
+                            <th>Iterasi</th>
+                            <th>a</th>
+                            <th>b</th>
+                            <th>c</th>
+                            <th>f(a)</th>
+                            <th>f(b)</th>
+                            <th>f(c)</th>
+                            <th>f(a)×f(c)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Graph -->
+        <div class="card p-4">
+            <h4 class="section-title">Visualisasi Grafik</h4>
+            <div class="chart-container">
+                <canvas id="functionGraph"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-4 text-center text-muted">
+        <small>© 2025 Metode Setengah Interval Calculator</small>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let chart = null;
+
+        document.getElementById('calculationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const method = document.getElementById('method').value;
+            const functionInput = document.getElementById('function').value.trim();
+            const epsilon = parseFloat(document.getElementById('epsilon').value);
+            
+            // Get inputs based on selected method
+            let data = {
+                method: method,
+                function: functionInput,
+                epsilon: epsilon
+            };
+
+            // Add appropriate inputs based on method
+            switch(method) {
+                case 'bisection':
+                    data.x0 = parseFloat(document.getElementById('x0').value);
+                    data.x1 = parseFloat(document.getElementById('x1').value);
+                    break;
+                case 'regulafalsi':
+                    data.x0 = parseFloat(document.getElementById('rf-x0').value);
+                    data.x1 = parseFloat(document.getElementById('rf-x1').value);
+                    break;
+                case 'newton':
+                    data.x0 = parseFloat(document.getElementById('newton-x0').value);
+                    break;
+                case 'secant':
+                    data.x0 = parseFloat(document.getElementById('secant-x0').value);
+                    data.x1 = parseFloat(document.getElementById('secant-x1').value);
+                    break;
+            }
+
+            try {
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(result, functionInput, method);
+                    updateTable(result.iterations, method);
+                    updateGraph(result.iterations, data, method);
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Terjadi kesalahan: ${error.message}
+                    </div>
+                `;
+            }
+        });
+
+        function displayResults(result, originalFunction, method) {
+            const lastIteration = result.iterations[result.iterations.length - 1];
+            let resultHTML = `
+                <div class="alert alert-success mb-4">
+                    <h5><i class="bi bi-check-circle me-2"></i>Akar ditemukan!</h5>
+                    <div class="row g-3 mt-2">
+                        <div class="col-sm-4">
+                            <strong>xᵢ = </strong>${result.root.toFixed(6)}
+                        </div>
+                        <div class="col-sm-4">
+                            <strong>f(xᵢ) = </strong>${lastIteration['f(c)'].toFixed(6)}
+                        </div>
+                        <div class="col-sm-4">
+                            <strong>Jumlah Iterasi = </strong>${result.iterations.length}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calculation-steps">
+                    <h5 class="mb-3"><i class="bi bi-list-check me-2"></i>Hasil Perhitungan Iterasi:</h5>
+                    
+                    <div class="steps-container">
+            `;
+
+            result.iterations.forEach((iter, index) => {
+                resultHTML += `
+                    <div class="step-item mb-3 p-3" style="background: #e3f2fd; border-radius: 10px;">
+                        <h6 class="text-primary mb-2">Iterasi ke-${iter.iteration}</h6>
+                        <div class="step-details">
+                `;
+
+                switch(method) {
+                    case 'bisection':
+                        resultHTML += `
+                            <p class="mb-2">
+                                <strong>1. Nilai Interval:</strong><br>
+                                xₙ = ${iter.a.toFixed(6)}<br>
+                                xₙ₊₁ = ${iter.b.toFixed(6)}
+                            </p>
+                            <p class="mb-2">
+                                <strong>2. Titik Tengah:</strong><br>
+                                xᵢ = (${iter.a.toFixed(6)} + ${iter.b.toFixed(6)})/2 = ${iter.c.toFixed(6)}
+                            </p>
+                            <p class="mb-2">
+                                <strong>3. Nilai Fungsi:</strong><br>
+                                f(xₙ) = (${originalFunction.replace(/x/g, '(' + iter.a.toFixed(6) + ')')}) = ${iter['f(a)'].toFixed(6)}<br>
+                                f(xₙ₊₁) = (${originalFunction.replace(/x/g, '(' + iter.b.toFixed(6) + ')')}) = ${iter['f(b)'].toFixed(6)}<br>
+                                f(xᵢ) = (${originalFunction.replace(/x/g, '(' + iter.c.toFixed(6) + ')')}) = ${iter['f(c)'].toFixed(6)}
+                            </p>
+                            <p class="mb-2">
+                                <strong>4. Pengecekan Interval Baru:</strong><br>
+                                f(xₙ) × f(xᵢ) = ${iter['f(a)'].toFixed(6)} × ${iter['f(c)'].toFixed(6)} = ${(iter['f(a)'] * iter['f(c)']).toFixed(6)}<br>
+                                ${(iter['f(a)'] * iter['f(c)']) < 0 ? 
+                                    `<span class="text-info">Karena hasil < 0, maka xₙ₊₁ = xᵢ</span>` : 
+                                    `<span class="text-info">Karena hasil > 0, maka xₙ = xᵢ</span>`
+                                }
+                            </p>
+                        `;
+                        break;
+                    case 'regulafalsi':
+                        resultHTML += `
+                            <p class="mb-2">
+                                <strong>1. Nilai Interval:</strong><br>
+                                xₙ = ${iter.xn.toFixed(6)}<br>
+                                xₙ₊₁ = ${iter.xn1.toFixed(6)}
+                            </p>
+                            <p class="mb-2">
+                                <strong>2. Nilai Tengah:</strong><br>
+                                xₜ = ${iter.xt.toFixed(6)}
+                            </p>
+                            <p class="mb-2">
+                                <strong>3. Nilai Fungsi:</strong><br>
+                                f(xₙ) = ${iter['f(xn)'].toFixed(6)}<br>
+                                f(xₙ₊₁) = ${iter['f(xn1)'].toFixed(6)}<br>
+                                f(xₜ) = ${iter['f(xt)'].toFixed(6)}
+                            </p>
+                        `;
+                        break;
+                    case 'newton':
+                        resultHTML += `
+                            <p class="mb-2">
+                                <strong>1. Nilai x:</strong><br>
+                                x₁ = ${iter.x1.toFixed(6)}
+                            </p>
+                            <p class="mb-2">
+                                <strong>2. Nilai Fungsi:</strong><br>
+                                f(x₁) = ${iter['f(x1)'].toFixed(6)}<br>
+                                f'(x) = ${iter['f\'(x)'].toFixed(6)}
+                            </p>
+                            <p class="mb-2">
+                                <strong>3. Nilai x baru:</strong><br>
+                                x₂ = ${iter.x2.toFixed(6)}<br>
+                                f(x₂) = ${iter['f(x2)'].toFixed(6)}
+                            </p>
+                        `;
+                        break;
+                    case 'secant':
+                        resultHTML += `
+                            <p class="mb-2">
+                                <strong>1. Nilai x:</strong><br>
+                                x₀ = ${iter.x0.toFixed(6)}<br>
+                                x₁ = ${iter.x1.toFixed(6)}
+                            </p>
+                            <p class="mb-2">
+                                <strong>2. Nilai Fungsi:</strong><br>
+                                f(x₀) = ${iter['f(x0)'].toFixed(6)}<br>
+                                f(x₁) = ${iter['f(x1)'].toFixed(6)}
+                            </p>
+                            <p class="mb-2">
+                                <strong>3. Nilai x baru:</strong><br>
+                                x₂ = ${iter.x2.toFixed(6)}<br>
+                                f(x₂) = ${iter['f(x2)'].toFixed(6)}
+                            </p>
+                        `;
+                        break;
+                }
+
+                resultHTML += `
+                            <p class="mb-2">
+                                <strong>5. Pengecekan Konvergensi:</strong><br>
+                                ${getConvergenceCheck(iter, method)}
+                            </p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultHTML += `</div></div>`;
+            document.getElementById('result').innerHTML = resultHTML;
+        }
+
+        function getConvergenceCheck(iter, method) {
+            switch(method) {
+                case 'bisection':
+                    return `|f(xᵢ)| = |${iter['f(c)'].toFixed(6)}| ${Math.abs(iter['f(c)']) < iter.epsilon ? 
+                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
+                        `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
+                case 'regulafalsi':
+                    return `|f(xₜ)| = |${iter['f(xt)'].toFixed(6)}| ${Math.abs(iter['f(xt)']) < iter.epsilon ? 
+                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
+                        `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
+                case 'newton':
+                    return `|f(x₂)| = |${iter['f(x2)'].toFixed(6)}| ${Math.abs(iter['f(x2)']) < iter.epsilon ? 
+                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
+                        `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
+                case 'secant':
+                    return `|f(x₂)| = |${iter['f(x2)'].toFixed(6)}| ${Math.abs(iter['f(x2)']) < iter.epsilon ? 
+                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
+                        `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
+            }
+        }
+
+        function updateTable(iterations, method) {
+            const tbody = document.querySelector('#iterationTable tbody');
+            const thead = document.querySelector('#iterationTable thead');
+            
+            // Update table headers based on method
+            let headerHTML = `
+                <tr>
+                    <th>Iterasi</th>
+            `;
+            
+            switch(method) {
+                case 'bisection':
+                    headerHTML += `
+                        <th>xₙ</th>
+                        <th>xₙ₊₁</th>
+                        <th>xᵢ</th>
+                        <th>f(xₙ)</th>
+                        <th>f(xₙ₊₁)</th>
+                        <th>f(xᵢ)</th>
+                        <th>f(xₙ)×f(xᵢ)</th>
+                    `;
+                    break;
+                case 'regulafalsi':
+                    headerHTML += `
+                        <th>xₙ</th>
+                        <th>xₙ₊₁</th>
+                        <th>xₜ</th>
+                        <th>f(xₙ)</th>
+                        <th>f(xₙ₊₁)</th>
+                        <th>f(xₜ)</th>
+                        <th>f(xₙ)×f(xₜ)</th>
+                    `;
+                    break;
+                case 'newton':
+                    headerHTML += `
+                        <th>x₁</th>
+                        <th>f(x₁)</th>
+                        <th>f'(x)</th>
+                        <th>x₂</th>
+                        <th>f(x₂)</th>
+                    `;
+                    break;
+                case 'secant':
+                    headerHTML += `
+                        <th>x₀</th>
+                        <th>x₁</th>
+                        <th>f(x₀)</th>
+                        <th>f(x₁)</th>
+                        <th>x₂</th>
+                        <th>f(x₂)</th>
+                    `;
+                    break;
+            }
+            headerHTML += `</tr>`;
+            thead.innerHTML = headerHTML;
+
+            // Update table body
+            tbody.innerHTML = '';
+            iterations.forEach(iter => {
+                const row = tbody.insertRow();
+                let cellHTML = `<td>${iter.iteration}</td>`;
+                
+                switch(method) {
+                    case 'bisection':
+                        cellHTML += `
+                            <td>${iter.a.toFixed(6)}</td>
+                            <td>${iter.b.toFixed(6)}</td>
+                            <td>${iter.c.toFixed(6)}</td>
+                            <td>${iter['f(a)'].toFixed(6)}</td>
+                            <td>${iter['f(b)'].toFixed(6)}</td>
+                            <td>${iter['f(c)'].toFixed(6)}</td>
+                            <td>${(iter['f(a)'] * iter['f(c)']).toFixed(6)}</td>
+                        `;
+                        break;
+                    case 'regulafalsi':
+                        cellHTML += `
+                            <td>${iter.xn.toFixed(6)}</td>
+                            <td>${iter.xn1.toFixed(6)}</td>
+                            <td>${iter.xt.toFixed(6)}</td>
+                            <td>${iter['f(xn)'].toFixed(6)}</td>
+                            <td>${iter['f(xn1)'].toFixed(6)}</td>
+                            <td>${iter['f(xt)'].toFixed(6)}</td>
+                            <td>${(iter['f(xn)'] * iter['f(xt)']).toFixed(6)}</td>
+                        `;
+                        break;
+                    case 'newton':
+                        cellHTML += `
+                            <td>${iter.x1.toFixed(6)}</td>
+                            <td>${iter['f(x1)'].toFixed(6)}</td>
+                            <td>${iter['f\'(x)'].toFixed(6)}</td>
+                            <td>${iter.x2.toFixed(6)}</td>
+                            <td>${iter['f(x2)'].toFixed(6)}</td>
+                        `;
+                        break;
+                    case 'secant':
+                        cellHTML += `
+                            <td>${iter.x0.toFixed(6)}</td>
+                            <td>${iter.x1.toFixed(6)}</td>
+                            <td>${iter['f(x0)'].toFixed(6)}</td>
+                            <td>${iter['f(x1)'].toFixed(6)}</td>
+                            <td>${iter.x2.toFixed(6)}</td>
+                            <td>${iter['f(x2)'].toFixed(6)}</td>
+                        `;
+                        break;
+                }
+                row.innerHTML = cellHTML;
+            });
+        }
+
+        function updateGraph(iterations, data, method) {
+            if (chart) {
+                chart.destroy();
+            }
+
+            const ctx = document.getElementById('functionGraph').getContext('2d');
+            let points;
+            
+            switch(method) {
+                case 'bisection':
+                    points = iterations.map(iter => ({
+                        x: iter.c,
+                        y: iter['f(c)'],
+                        iteration: iter.iteration
+                    }));
+                    break;
+                case 'regulafalsi':
+                    points = iterations.map(iter => ({
+                        x: iter.xt,
+                        y: iter['f(xt)'],
+                        iteration: iter.iteration
+                    }));
+                    break;
+                case 'newton':
+                    points = iterations.map(iter => ({
+                        x: iter.x2,
+                        y: iter['f(x2)'],
+                        iteration: iter.iteration
+                    }));
+                    break;
+                case 'secant':
+                    points = iterations.map(iter => ({
+                        x: iter.x2,
+                        y: iter['f(x2)'],
+                        iteration: iter.iteration
+                    }));
+                    break;
+            }
+
+            const xValues = points.map(p => p.x);
+            const yValues = points.map(p => p.y);
+            const xMin = Math.min(...xValues);
+            const xMax = Math.max(...xValues);
+            const yMin = Math.min(...yValues);
+            const yMax = Math.max(...yValues);
+            
+            const xMargin = (xMax - xMin) * 0.1;
+            const yMargin = (yMax - yMin) * 0.1;
+
+            chart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Titik Iterasi',
+                        data: points,
+                        backgroundColor: '#FFD700',
+                        borderColor: '#4361EE',
+                        borderWidth: 2.5,
+                        pointRadius: window.innerWidth < 768 ? 5 : 7,
+                        pointHoverRadius: window.innerWidth < 768 ? 7 : 9,
+                        pointStyle: 'circle',
+                        showLine: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: window.innerWidth < 768 ? 12 : 14,
+                                    weight: 'bold'
+                                },
+                                padding: window.innerWidth < 768 ? 10 : 15
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Grafik Konvergensi',
+                            font: {
+                                size: window.innerWidth < 768 ? 14 : 16,
+                                weight: 'bold'
+                            },
+                            padding: window.innerWidth < 768 ? 15 : 20
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: {
+                                size: window.innerWidth < 768 ? 12 : 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: window.innerWidth < 768 ? 11 : 13
+                            },
+                            padding: window.innerWidth < 768 ? 8 : 12,
+                            callbacks: {
+                                label: function(context) {
+                                    const point = context.raw;
+                                    return [
+                                        `Iterasi ke-${point.iteration}`,
+                                        `x = ${point.x.toFixed(6)}`,
+                                        `f(x) = ${point.y.toFixed(6)}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'x',
+                                font: {
+                                    size: window.innerWidth < 768 ? 12 : 14,
+                                    weight: 'bold'
+                                },
+                                padding: window.innerWidth < 768 ? 10 : 15
+                            },
+                            min: xMin - xMargin,
+                            max: xMax + xMargin,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                borderColor: 'rgba(0, 0, 0, 0.3)',
+                                tickColor: 'rgba(0, 0, 0, 0.3)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: window.innerWidth < 768 ? 10 : 12
+                                },
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 6
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'f(x)',
+                                font: {
+                                    size: window.innerWidth < 768 ? 12 : 14,
+                                    weight: 'bold'
+                                },
+                                padding: window.innerWidth < 768 ? 10 : 15
+                            },
+                            min: yMin - yMargin,
+                            max: yMax + yMargin,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                borderColor: 'rgba(0, 0, 0, 0.3)',
+                                tickColor: 'rgba(0, 0, 0, 0.3)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: window.innerWidth < 768 ? 10 : 12
+                                },
+                                maxTicksLimit: 6
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'nearest'
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('resize', function() {
+            if (chart) {
+                chart.resize();
+            }
+        });
+
+        // Function to evaluate mathematical expressions
+        function evaluateFunction(func, x) {
+            return math.evaluate(func, { x: x });
+        }
+
+        // Regula Falsi Method
+        function regulaFalsi(func, a, b, tolerance, maxIterations) {
+            let iterations = [];
+            let fa = evaluateFunction(func, a);
+            let fb = evaluateFunction(func, b);
+            
+            if (fa * fb >= 0) {
+                throw new Error("Fungsi harus memiliki tanda yang berbeda di titik a dan b");
+            }
+
+            for (let i = 0; i < maxIterations; i++) {
+                let c = (a * fb - b * fa) / (fb - fa);
+                let fc = evaluateFunction(func, c);
+                
+                iterations.push({
+                    iteration: i + 1,
+                    a: a,
+                    b: b,
+                    c: c,
+                    f_c: fc
+                });
+
+                if (Math.abs(fc) < tolerance) {
+                    return { root: c, iterations: iterations };
+                }
+
+                if (fa * fc < 0) {
+                    b = c;
+                    fb = fc;
+                } else {
+                    a = c;
+                    fa = fc;
+                }
+            }
+
+            return { root: (a + b) / 2, iterations: iterations };
+        }
+
+        // Newton Method
+        function newtonMethod(func, x0, tolerance, maxIterations) {
+            let iterations = [];
+            let x = x0;
+            
+            for (let i = 0; i < maxIterations; i++) {
+                let fx = evaluateFunction(func, x);
+                let dfx = math.derivative(func, 'x').evaluate({ x: x });
+                
+                if (Math.abs(dfx) < 1e-10) {
+                    throw new Error("Turunan mendekati nol, metode Newton tidak konvergen");
+                }
+
+                let x1 = x - fx / dfx;
+                iterations.push({
+                    iteration: i + 1,
+                    x: x,
+                    f_x: fx,
+                    x_new: x1
+                });
+
+                if (Math.abs(x1 - x) < tolerance) {
+                    return { root: x1, iterations: iterations };
+                }
+
+                x = x1;
+            }
+
+            return { root: x, iterations: iterations };
+        }
+
+        // Secant Method
+        function secantMethod(func, x0, x1, tolerance, maxIterations) {
+            let iterations = [];
+            let fx0 = evaluateFunction(func, x0);
+            let fx1 = evaluateFunction(func, x1);
+            
+            for (let i = 0; i < maxIterations; i++) {
+                if (Math.abs(fx1 - fx0) < 1e-10) {
+                    throw new Error("Pembagian dengan nol, metode Secant tidak konvergen");
+                }
+
+                let x2 = x1 - fx1 * (x1 - x0) / (fx1 - fx0);
+                let fx2 = evaluateFunction(func, x2);
+                
+                iterations.push({
+                    iteration: i + 1,
+                    x0: x0,
+                    x1: x1,
+                    x2: x2,
+                    f_x2: fx2
+                });
+
+                if (Math.abs(x2 - x1) < tolerance) {
+                    return { root: x2, iterations: iterations };
+                }
+
+                x0 = x1;
+                x1 = x2;
+                fx0 = fx1;
+                fx1 = fx2;
+            }
+
+            return { root: x1, iterations: iterations };
+        }
+
+        // Add event listener for method change
+        document.getElementById('method').addEventListener('change', function() {
+            const method = this.value;
+            
+            // Hide all method inputs and requirements
+            document.querySelectorAll('.method-inputs').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.method-requirements').forEach(el => el.style.display = 'none');
+            
+            // Show selected method inputs and requirements
+            document.getElementById(`${method}-inputs`).style.display = 'block';
+            document.getElementById(`${method}-requirements`).style.display = 'block';
+            
+            // Update form validation based on method
+            const form = document.getElementById('calculationForm');
+            const inputs = form.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => {
+                input.required = false;
+            });
+
+            switch(method) {
+                case 'bisection':
+                case 'regulafalsi':
+                    document.getElementById(method === 'bisection' ? 'x0' : 'rf-x0').required = true;
+                    document.getElementById(method === 'bisection' ? 'x1' : 'rf-x1').required = true;
+                    break;
+                case 'newton':
+                    document.getElementById('newton-x0').required = true;
+                    break;
+                case 'secant':
+                    document.getElementById('secant-x0').required = true;
+                    document.getElementById('secant-x1').required = true;
+                    break;
+            }
+        });
+
+        // Function to get current method inputs
+        function getCurrentMethodInputs() {
+            const method = document.getElementById('method').value;
+            switch(method) {
+                case 'bisection':
+                    return {
+                        x0: parseFloat(document.getElementById('x0').value),
+                        x1: parseFloat(document.getElementById('x1').value)
+                    };
+                case 'regulafalsi':
+                    return {
+                        x0: parseFloat(document.getElementById('rf-x0').value),
+                        x1: parseFloat(document.getElementById('rf-x1').value)
+                    };
+                case 'newton':
+                    return {
+                        x0: parseFloat(document.getElementById('newton-x0').value)
+                    };
+                case 'secant':
+                    return {
+                        x0: parseFloat(document.getElementById('secant-x0').value),
+                        x1: parseFloat(document.getElementById('secant-x1').value)
+                    };
+            }
+        }
+    </script>
+</body>
+</html>
