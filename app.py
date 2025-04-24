@@ -107,7 +107,8 @@ def regula_falsi(f, x0, x1, epsilon):
         
         iteration = 0
         while True:
-            xt = xn1 - fxn1 * (xn1 - xn) / (fxn1 - fxn)
+            # Rumus Regula Falsi sesuai flowchart
+            xt = xn - fxn * (xn1 - xn) / (fxn1 - fxn)
             fxt = f_numeric(xt)
             
             iteration_data = {
@@ -199,14 +200,17 @@ def secant(f, x0, x1, epsilon):
         x_prev = float(x0)
         x_curr = float(x1)
         
+        # Evaluasi fungsi di titik awal
+        f_prev = f_numeric(x_prev)
+        f_curr = f_numeric(x_curr)
+        
         iteration = 0
         while True:
-            f_prev = f_numeric(x_prev)
-            f_curr = f_numeric(x_curr)
-            
+            # Cek pembagian dengan nol
             if abs(f_curr - f_prev) < 1e-10:
                 raise ValueError("Pembagian dengan nilai terlalu kecil")
             
+            # Hitung x berikutnya menggunakan rumus secant
             x_next = x_curr - f_curr * (x_curr - x_prev) / (f_curr - f_prev)
             f_next = f_numeric(x_next)
             
@@ -217,15 +221,20 @@ def secant(f, x0, x1, epsilon):
                 'f(x0)': f_prev,
                 'f(x1)': f_curr,
                 'x2': x_next,
-                'f(x2)': f_next
+                'f(x2)': f_next,
+                'epsilon': epsilon
             }
             iterations.append(iteration_data)
             
-            if abs(f_next) < epsilon:
+            # Kriteria konvergensi: selisih antara dua titik berurutan
+            if abs(x_next - x_curr) < epsilon:
                 break
-                
+            
+            # Update nilai untuk iterasi berikutnya
             x_prev = x_curr
             x_curr = x_next
+            f_prev = f_curr
+            f_curr = f_next
             
             iteration += 1
             if iteration > 100:

@@ -383,19 +383,20 @@
                                     <div class="mb-3">
                                         <strong class="text-primary">1. Rumus Regula Falsi:</strong>
                                         <div class="ms-3 mt-1">
-                                            xᵢ = xₙ₊₁ - f(xₙ₊₁)(xₙ₊₁ - xₙ)/(f(xₙ₊₁) - f(xₙ))
+                                            xₜ = xₙ - f(xₙ)(xₙ₊₁ - xₙ)/(f(xₙ₊₁) - f(xₙ))
                                         </div>
                                     </div>
                                     <div class="mb-3">
                                         <strong class="text-primary">2. Syarat Khusus:</strong>
                                         <div class="ms-3 mt-1">
-                                            • f(xₙ) × f(xₙ₊₁) < 0
+                                            • Jika f(xₙ) × f(xₜ) < 0, maka xₙ₊₁ = xₜ<br>
+                                            • Jika f(xₙ) × f(xₜ) > 0, maka xₙ = xₜ, f(xₙ) = f(xₜ)
                                         </div>
                                     </div>
                                     <div>
                                         <strong class="text-primary">3. Syarat Berhenti:</strong>
                                         <div class="ms-3 mt-1">
-                                            • |f(xᵢ)| < ε
+                                            • |f(xₜ)| < ε
                                         </div>
                                     </div>
                                 </div>
@@ -420,7 +421,7 @@
                                     <div>
                                         <strong class="text-primary">3. Syarat Berhenti:</strong>
                                         <div class="ms-3 mt-1">
-                                            • |x₂ - x₁| < ε
+                                            • |f(x₂)| < ε
                                         </div>
                                     </div>
                                 </div>
@@ -432,20 +433,21 @@
                                     <div class="mb-3">
                                         <strong class="text-primary">1. Rumus Secant:</strong>
                                         <div class="ms-3 mt-1">
-                                            xᵢ₊₁ = xᵢ - f(xᵢ)(xᵢ - xᵢ₋₁)/(f(xᵢ) - f(xᵢ₋₁))
+                                            x₂ = x₁ - f(x₁)(x₁ - x₀)/(f(x₁) - f(x₀))
                                         </div>
                                     </div>
                                     <div class="mb-3">
                                         <strong class="text-primary">2. Syarat Khusus:</strong>
                                         <div class="ms-3 mt-1">
                                             • Tidak perlu turunan<br>
-                                            • Membutuhkan dua tebakan awal
+                                            • Membutuhkan dua tebakan awal<br>
+                                            • f(x₁) - f(x₀) ≠ 0
                                         </div>
                                     </div>
                                     <div>
                                         <strong class="text-primary">3. Syarat Berhenti:</strong>
                                         <div class="ms-3 mt-1">
-                                            • |xᵢ₊₁ - xᵢ| < ε
+                                            • |f(x₂)| < ε
                                         </div>
                                     </div>
                                 </div>
@@ -477,13 +479,13 @@
                     <thead>
                         <tr>
                             <th>Iterasi</th>
-                            <th>a</th>
-                            <th>b</th>
-                            <th>c</th>
-                            <th>f(a)</th>
-                            <th>f(b)</th>
-                            <th>f(c)</th>
-                            <th>f(a)×f(c)</th>
+                            <th>xₙ</th>
+                            <th>xₙ₊₁</th>
+                            <th>xᵢ</th>
+                            <th>f(xₙ)</th>
+                            <th>f(xₙ₊₁)</th>
+                            <th>f(xᵢ)</th>
+                        <th>f(xₙ)×f(xᵢ)</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -584,7 +586,12 @@
                             <strong>x = </strong>${result.root.toFixed(6)}
                         </div>
                         <div class="col-sm-4">
-                            <strong>f(x) = </strong>${method === 'newton' ? lastIteration['f(x2)'].toFixed(6) : (lastIteration['f(c)'] ? lastIteration['f(c)'].toFixed(6) : lastIteration['f(xt)'].toFixed(6))}
+                            <strong>f(x) = </strong>${
+                                method === 'secant' ? lastIteration['f(x2)'].toFixed(6) :
+                                method === 'newton' ? lastIteration['f(x2)'].toFixed(6) :
+                                lastIteration['f(c)'] ? lastIteration['f(c)'].toFixed(6) : 
+                                lastIteration['f(xt)'].toFixed(6)
+                            }
                         </div>
                         <div class="col-sm-4">
                             <strong>Jumlah Iterasi = </strong>${result.iterations.length}
@@ -685,19 +692,19 @@
                     case 'secant':
                         resultHTML += `
                             <p class="mb-2">
-                                <strong>1. Nilai x:</strong><br>
+                                <strong>1. 2 Nilai Awal:</strong><br>
                                 x₀ = ${iter.x0.toFixed(6)}<br>
                                 x₁ = ${iter.x1.toFixed(6)}
                             </p>
                             <p class="mb-2">
                                 <strong>2. Nilai Fungsi:</strong><br>
-                                f(x₀) = ${iter['f(x0)'].toFixed(6)}<br>
-                                f(x₁) = ${iter['f(x1)'].toFixed(6)}
+                                f(x₀) = (${originalFunction.replace(/x/g, '(' + iter.x0.toFixed(6) + ')')}) = ${iter['f(x0)'].toFixed(6)}<br>
+                                f(x₁) = (${originalFunction.replace(/x/g, '(' + iter.x1.toFixed(6) + ')')}) = ${iter['f(x1)'].toFixed(6)}
                             </p>
                             <p class="mb-2">
-                                <strong>3. Nilai x baru:</strong><br>
-                                x₂ = ${iter.x2.toFixed(6)}<br>
-                                f(x₂) = ${iter['f(x2)'].toFixed(6)}
+                                <strong>3. Nilai Fungsi Baru:</strong><br>
+                                x₂ = (${iter.x1.toFixed(6)} - (${iter['f(x1)'].toFixed(6)})/(${iter['f(x0)'].toFixed(6)} - ${iter['f(x1)'].toFixed(6)})) = ${iter.x2.toFixed(6)}<br>
+                                f(x₂) = (${originalFunction.replace(/x/g, '(' + iter.x2.toFixed(6) + ')')}) = ${iter['f(x2)'].toFixed(6)}
                             </p>
                         `;
                         break;
@@ -729,11 +736,11 @@
                         `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
                 case 'newton':
                     return `|f(x₂)| = |${iter['f(x2)']?.toFixed(6) || 'undefined'}| ${iter['f(x2)'] && Math.abs(iter['f(x2)']) < iter.epsilon ? 
-                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
+                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(x₂)| lebih kecil dari toleransi ε</span>` : 
                         `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
                 case 'secant':
                     return `|f(x₂)| = |${iter['f(x2)']?.toFixed(6) || 'undefined'}| ${iter['f(x2)'] && Math.abs(iter['f(x2)']) < iter.epsilon ? 
-                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
+                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(x₂)| lebih kecil dari toleransi ε</span>` : 
                         `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
             }
         }
@@ -749,6 +756,16 @@
             `;
             
             switch(method) {
+                case 'secant':
+                    headerHTML += `
+                        <th>x₀</th>
+                        <th>x₁</th>
+                        <th>f(x₀)</th>
+                        <th>f(x₁)</th>
+                        <th>x₂</th>
+                        <th>f(x₂)</th>
+                    `;
+                    break;
                 case 'bisection':
                     headerHTML += `
                         <th>xₙ</th>
@@ -780,16 +797,6 @@
                         <th>f(x₂)</th>
                     `;
                     break;
-                case 'secant':
-                    headerHTML += `
-                        <th>x₀</th>
-                        <th>x₁</th>
-                        <th>f(x₀)</th>
-                        <th>f(x₁)</th>
-                        <th>x₂</th>
-                        <th>f(x₂)</th>
-                    `;
-                    break;
             }
             headerHTML += `</tr>`;
             thead.innerHTML = headerHTML;
@@ -801,6 +808,16 @@
                 let cellHTML = `<td>${iter.iteration}</td>`;
                 
                 switch(method) {
+                    case 'secant':
+                        cellHTML += `
+                            <td>${iter.x0.toFixed(6)}</td>
+                            <td>${iter.x1.toFixed(6)}</td>
+                            <td>${iter['f(x0)'].toFixed(6)}</td>
+                            <td>${iter['f(x1)'].toFixed(6)}</td>
+                            <td>${iter.x2.toFixed(6)}</td>
+                            <td>${iter['f(x2)'].toFixed(6)}</td>
+                        `;
+                        break;
                     case 'bisection':
                         cellHTML += `
                             <td>${iter.a.toFixed(6)}</td>
@@ -828,16 +845,6 @@
                             <td>${iter.x1.toFixed(6)}</td>
                             <td>${iter['f(x1)'].toFixed(6)}</td>
                             <td>${iter['f\'(x)'].toFixed(6)}</td>
-                            <td>${iter.x2.toFixed(6)}</td>
-                            <td>${iter['f(x2)'].toFixed(6)}</td>
-                        `;
-                        break;
-                    case 'secant':
-                        cellHTML += `
-                            <td>${iter.x0.toFixed(6)}</td>
-                            <td>${iter.x1.toFixed(6)}</td>
-                            <td>${iter['f(x0)'].toFixed(6)}</td>
-                            <td>${iter['f(x1)'].toFixed(6)}</td>
                             <td>${iter.x2.toFixed(6)}</td>
                             <td>${iter['f(x2)'].toFixed(6)}</td>
                         `;
