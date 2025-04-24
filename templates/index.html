@@ -306,7 +306,7 @@
                         <div id="newton-inputs" class="method-inputs" style="display: none;">
                             <div class="mb-4">
                                 <label for="newton-x0" class="form-label">
-                                    <i class="bi bi-arrow-right-circle"></i> Tebakan Awal (x₀)
+                                    <i class="bi bi-arrow-right-circle"></i> Tebakan Awal (x₁)
                                 </label>
                                 <input type="number" class="form-control" id="newton-x0" step="any">
                             </div>
@@ -405,9 +405,9 @@
                             <div id="newton-requirements" class="method-requirements" style="display: none;">
                                 <div class="p-3" style="background: #e3f2fd; border-radius: 10px; font-size: 0.9rem; border-left: 4px solid var(--primary-color);">
                                     <div class="mb-3">
-                                        <strong class="text-primary">1. Rumus Newton-Raphson:</strong>
+                                        <strong class="text-primary">1. Rumus Newton:</strong>
                                         <div class="ms-3 mt-1">
-                                            xᵢ₊₁ = xᵢ - f(xᵢ)/f'(xᵢ)
+                                            x₂ = x₁ - f(x₁)/f'(x₁)
                                         </div>
                                     </div>
                                     <div class="mb-3">
@@ -420,7 +420,7 @@
                                     <div>
                                         <strong class="text-primary">3. Syarat Berhenti:</strong>
                                         <div class="ms-3 mt-1">
-                                            • |xᵢ₊₁ - xᵢ| < ε
+                                            • |x₂ - x₁| < ε
                                         </div>
                                     </div>
                                 </div>
@@ -581,10 +581,10 @@
                     <h5><i class="bi bi-check-circle me-2"></i>Akar ditemukan!</h5>
                     <div class="row g-3 mt-2">
                         <div class="col-sm-4">
-                            <strong>xᵢ = </strong>${result.root.toFixed(6)}
+                            <strong>x = </strong>${result.root.toFixed(6)}
                         </div>
                         <div class="col-sm-4">
-                            <strong>f(xᵢ) = </strong>${lastIteration['f(c)'] ? lastIteration['f(c)'].toFixed(6) : lastIteration['f(xt)'].toFixed(6)}
+                            <strong>f(x) = </strong>${method === 'newton' ? lastIteration['f(x2)'].toFixed(6) : (lastIteration['f(c)'] ? lastIteration['f(c)'].toFixed(6) : lastIteration['f(xt)'].toFixed(6))}
                         </div>
                         <div class="col-sm-4">
                             <strong>Jumlah Iterasi = </strong>${result.iterations.length}
@@ -600,7 +600,7 @@
             result.iterations.forEach((iter, index) => {
                 resultHTML += `
                     <div class="step-item mb-3 p-3" style="background: #e3f2fd; border-radius: 10px;">
-                        <h6 class="text-primary mb-2">Iterasi ke-${iter.iteration}</h6>
+                        <h6 class="text-primary mb-2">Iterasi ke-${index + 1}</h6>
                         <div class="step-details">
                 `;
 
@@ -662,18 +662,23 @@
                     case 'newton':
                         resultHTML += `
                             <p class="mb-2">
-                                <strong>1. Nilai x:</strong><br>
+                                <strong>1. Nilai Awal:</strong><br>
                                 x₁ = ${iter.x1.toFixed(6)}
                             </p>
                             <p class="mb-2">
-                                <strong>2. Nilai Fungsi:</strong><br>
-                                f(x₁) = ${iter['f(x1)'].toFixed(6)}<br>
-                                f'(x) = ${iter['f\'(x)'].toFixed(6)}
+                                <strong>2. Rumus Fungsi dan Turunan:</strong><br>
+                                f(x) = ${originalFunction}<br>
+                                f'(x) = ${iter.df_expr}<br>
                             </p>
                             <p class="mb-2">
-                                <strong>3. Nilai x baru:</strong><br>
-                                x₂ = ${iter.x2.toFixed(6)}<br>
-                                f(x₂) = ${iter['f(x2)'].toFixed(6)}
+                                <strong>3. Nilai Fungsi dan Turunan:</strong><br>
+                                f(x₁) = (${originalFunction.replace(/x/g, '(' + iter.x1.toFixed(6) + ')')}) = ${iter['f(x1)'].toFixed(6)}<br>
+                                f'(x₁) = (${iter.df_expr.replace(/x/g, '(' + iter.x1.toFixed(6) + ')')}) = ${iter['f\'(x)'].toFixed(6)}
+                            </p>
+                            <p class="mb-2">
+                                <strong>4. Nilai Turunan Fungsi Baru:</strong><br>
+                                x₂ = (${iter.x1.toFixed(6)} - (${iter['f(x1)'].toFixed(6)})/(${iter['f\'(x)'].toFixed(6)}))= ${iter.x2.toFixed(6)}<br>
+                                f(x₂) = (${originalFunction.replace(/x/g, '(' + iter.x2.toFixed(6) + ')')}) = ${iter['f(x2)'].toFixed(6)}
                             </p>
                         `;
                         break;
@@ -700,7 +705,7 @@
 
                 resultHTML += `
                             <p class="mb-2">
-                                <strong>5. Pengecekan Konvergensi:</strong><br>
+                                <strong> >> Pengecekan Konvergensi:</strong><br>
                                 ${getConvergenceCheck(iter, method)}
                             </p>
                         </div>
@@ -720,7 +725,7 @@
                         `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
                 case 'regulafalsi':
                     return `|f(xₜ)| = |${iter['f(xt)']?.toFixed(6) || 'undefined'}| ${iter['f(xt)'] && Math.abs(iter['f(xt)']) < iter.epsilon ? 
-                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
+                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xₜ)| lebih kecil dari toleransi ε</span>` : 
                         `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
                 case 'newton':
                     return `|f(x₂)| = |${iter['f(x2)']?.toFixed(6) || 'undefined'}| ${iter['f(x2)'] && Math.abs(iter['f(x2)']) < iter.epsilon ? 

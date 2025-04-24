@@ -117,7 +117,8 @@ def regula_falsi(f, x0, x1, epsilon):
                 'xt': xt,
                 'f(xn)': fxn,
                 'f(xn1)': fxn1,
-                'f(xt)': fxt
+                'f(xt)': fxt,
+                'epsilon': epsilon
             }
             iterations.append(iteration_data)
             
@@ -148,9 +149,10 @@ def newton_raphson(f, x0, epsilon):
         
         # Langkah 1: Inisialisasi
         x1 = float(x0)
+        iteration = 0
         
         # Langkah 2: Hitung turunan
-        df_expr = diff(f_expr, x)
+        df_expr = diff(f_expr, x)  # Ekspresi turunan
         df_lambda = lambdify(x, df_expr)
         
         # Langkah 3: Iterasi
@@ -169,8 +171,10 @@ def newton_raphson(f, x0, epsilon):
                 'x1': x1,
                 'f(x1)': fx1,
                 'f\'(x)': dfx,
+                'df_expr': str(df_expr),  # Tambahkan ekspresi turunan
                 'x2': x2,
-                'f(x2)': fx2
+                'f(x2)': fx2,
+                'epsilon': epsilon
             }
             iterations.append(iteration_data)
             
