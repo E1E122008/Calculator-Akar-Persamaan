@@ -363,7 +363,6 @@
                                     <div class="mb-3">
                                         <strong class="text-primary">2. Syarat Pengecekan Interval:</strong>
                                         <div class="ms-3 mt-1">
-                                            • f(xₙ) × f(xₙ₊₁) < 0<br>
                                             • Jika f(xₙ) × f(xᵢ) < 0, maka xₙ₊₁ = xᵢ<br>
                                             • Jika f(xₙ) × f(xᵢ) > 0, maka xₙ = xᵢ
                                         </div>
@@ -371,7 +370,7 @@
                                     <div>
                                         <strong class="text-primary">3. Syarat Berhenti:</strong>
                                         <div class="ms-3 mt-1">
-                                            • |f(xᵢ)| < ε atau |xₙ₊₁ - xₙ| < ε
+                                            • |f(xᵢ)| < ε 
                                         </div>
                                     </div>
                                 </div>
@@ -390,7 +389,7 @@
                                         <strong class="text-primary">2. Syarat Khusus:</strong>
                                         <div class="ms-3 mt-1">
                                             • Jika f(xₙ) × f(xₜ) < 0, maka xₙ₊₁ = xₜ<br>
-                                            • Jika f(xₙ) × f(xₜ) > 0, maka xₙ = xₜ, f(xₙ) = f(xₜ)
+                                            • Jika f(xₙ) × f(xₜ) > 0, maka xₙ = xₜ
                                         </div>
                                     </div>
                                     <div>
@@ -421,7 +420,8 @@
                                     <div>
                                         <strong class="text-primary">3. Syarat Berhenti:</strong>
                                         <div class="ms-3 mt-1">
-                                            • |f(x₂)| < ε
+                                            • Jika |f(x₂)| > ε, maka x₁ = x₂ dan iterasi dilanjutkan<br>
+                                            • Jika |f(x₂)| < ε, maka iterasi berhenti
                                         </div>
                                     </div>
                                 </div>
@@ -647,13 +647,13 @@
                                 xₙ₊₁ = ${iter.xn1.toFixed(6)}
                             </p>
                             <p class="mb-2">
-                                <strong>2. Nilai Tengah:</strong><br>
-                                xₜ = (${iter.xn1.toFixed(6)} - ${iter['f(xn1)'].toFixed(6)}(${iter.xn1.toFixed(6)} - ${iter.xn.toFixed(6)})/(${iter['f(xn1)'].toFixed(6)} - ${iter['f(xn)'].toFixed(6)})) = ${iter.xt.toFixed(6)}
-                            </p>
-                            <p class="mb-2">
-                                <strong>3. Nilai Fungsi:</strong><br>
+                                <strong>2. Nilai Fungsi:</strong><br>
                                 f(xₙ) = (${originalFunction.replace(/x/g, '(' + iter.xn.toFixed(6) + ')')}) = ${iter['f(xn)'].toFixed(6)}<br>
                                 f(xₙ₊₁) = (${originalFunction.replace(/x/g, '(' + iter.xn1.toFixed(6) + ')')}) = ${iter['f(xn1)'].toFixed(6)}<br>
+                            </p>
+                            <p class="mb-2">
+                                <strong>3. Nilai Tengah:</strong><br>
+                                xₜ = (${iter.xn1.toFixed(6)} - ${iter['f(xn1)'].toFixed(6)}(${iter.xn1.toFixed(6)} - ${iter.xn.toFixed(6)})/(${iter['f(xn1)'].toFixed(6)} - ${iter['f(xn)'].toFixed(6)})) = ${iter.xt.toFixed(6)} <br>
                                 f(xₜ) = (${originalFunction.replace(/x/g, '(' + iter.xt.toFixed(6) + ')')}) = ${iter['f(xt)'].toFixed(6)}
                             </p>
                             <p class="mb-2">
