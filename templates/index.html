@@ -447,7 +447,8 @@
                                     <div>
                                         <strong class="text-primary">3. Syarat Berhenti:</strong>
                                         <div class="ms-3 mt-1">
-                                            • |f(x₂)| < ε
+                                            • Jika |f(x₂)| > ε, maka x₁ = x₂ , x₀ = x₁ dan iterasi dilanjutkan<br>
+                                            • Jika |f(x₂)| < ε, maka iterasi berhenti
                                         </div>
                                     </div>
                                 </div>
@@ -692,7 +693,7 @@
                     case 'secant':
                         resultHTML += `
                             <p class="mb-2">
-                                <strong>1. 2 Nilai Awal:</strong><br>
+                                <strong>1. Dua Nilai Awal:</strong><br>
                                 x₀ = ${iter.x0.toFixed(6)}<br>
                                 x₁ = ${iter.x1.toFixed(6)}
                             </p>
@@ -703,7 +704,7 @@
                             </p>
                             <p class="mb-2">
                                 <strong>3. Nilai Fungsi Baru:</strong><br>
-                                x₂ = (${iter.x1.toFixed(6)} - (${iter['f(x1)'].toFixed(6)})/(${iter['f(x0)'].toFixed(6)} - ${iter['f(x1)'].toFixed(6)})) = ${iter.x2.toFixed(6)}<br>
+                                x₂ = ${iter.x1.toFixed(6)} - ${iter['f(x1)'].toFixed(6)} * ((${iter.x1.toFixed(6)} - ${iter.x0.toFixed(6)})) / (${iter['f(x1)'].toFixed(6)} - ${iter['f(x0)'].toFixed(6)}) = ${iter.x2.toFixed(6)}<br>
                                 f(x₂) = (${originalFunction.replace(/x/g, '(' + iter.x2.toFixed(6) + ')')}) = ${iter['f(x2)'].toFixed(6)}
                             </p>
                         `;
@@ -737,11 +738,11 @@
                 case 'newton':
                     return `|f(x₂)| = |${iter['f(x2)']?.toFixed(6) || 'undefined'}| ${iter['f(x2)'] && Math.abs(iter['f(x2)']) < iter.epsilon ? 
                         `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(x₂)| lebih kecil dari toleransi ε</span>` : 
-                        `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
+                        `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi) <br> <span class="text-info">Karena hasil |f(x₂)| > ε, maka x₁ = x₂</span></span>`}`;
                 case 'secant':
                     return `|f(x₂)| = |${iter['f(x2)']?.toFixed(6) || 'undefined'}| ${iter['f(x2)'] && Math.abs(iter['f(x2)']) < iter.epsilon ? 
                         `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(x₂)| lebih kecil dari toleransi ε</span>` : 
-                        `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
+                        `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi) <br> <span class="text-info">Karena hasil |f(x₂)| > ε, maka x₁ = x₂</span></span>`}`;
             }
         }
 
