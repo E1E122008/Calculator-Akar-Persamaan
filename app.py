@@ -35,29 +35,34 @@ def create_function(f_str):
     
     return f_expr, f_numeric
 
+def check_iteration_limit(iteration, max_iterations=100):
+    if iteration > max_iterations:
+        raise ValueError("Iterasi maksimum tercapai (100 iterasi)")
+
+
 def interval_halving(f, x0, x1, epsilon):
     iterations = []
     try:
         f_expr, f_numeric = create_function(f)
         
-        a = float(x0)  # Batas bawah
-        b = float(x1)  # Batas atas
+        a = float(x0)
+        b = float(x1)
         
         if a >= b:
             raise ValueError("Interval awal (a) harus lebih kecil dari interval akhir (b)")
 
-        fa = f_numeric(a)   # f(a)
-        fb = f_numeric(b)   # f(b)
+        fa = f_numeric(a)
+        fb = f_numeric(b)
         
         if fa * fb >= 0:
-            raise ValueError("Interval awal tidak memenuhi syarat teorema (f(a)*f(b) harus < 0)")
+            raise ValueError("Interval awal tidak memenuhi syarat teorema (f(xₙ)*f(xₙ₊₁) harus < 0)")
         
         iteration = 0
         while True:
-            c = (a + b) / 2  # Titik tengah
-            fa = f_numeric(a)   # f(a)
-            fb = f_numeric(b)   # f(b)
-            fc = f_numeric(c)   # f(c)
+            c = (a + b) / 2
+            fa = f_numeric(a)
+            fb = f_numeric(b)
+            fc = f_numeric(c)
             
             iteration_data = {
                 'iteration': iteration + 1,
@@ -80,8 +85,7 @@ def interval_halving(f, x0, x1, epsilon):
                 a = c
                 
             iteration += 1
-            if iteration > 100:
-                raise ValueError("Iterasi maksimum tercapai (100 iterasi)")
+            check_iteration_limit(iteration)
         
         return iterations, c
         
@@ -107,7 +111,6 @@ def regula_falsi(f, x0, x1, epsilon):
         
         iteration = 0
         while True:
-            # Rumus Regula Falsi sesuai flowchart
             xt = xn - fxn * (xn1 - xn) / (fxn1 - fxn)
             fxt = f_numeric(xt)
             
@@ -134,8 +137,7 @@ def regula_falsi(f, x0, x1, epsilon):
                 fxn = fxt
                 
             iteration += 1
-            if iteration > 100:
-                raise ValueError("Iterasi maksimum tercapai (100 iterasi)")
+            check_iteration_limit(iteration)
         
         return iterations, xt
         
@@ -148,15 +150,12 @@ def newton_raphson(f, x0, epsilon):
         x = symbols('x')
         f_expr, f_numeric = create_function(f)
         
-        # Langkah 1: Inisialisasi
         x1 = float(x0)
         iteration = 0
         
-        # Langkah 2: Hitung turunan
-        df_expr = diff(f_expr, x)  # Ekspresi turunan
+        df_expr = diff(f_expr, x)
         df_lambda = lambdify(x, df_expr)
         
-        # Langkah 3: Iterasi
         while True:
             fx1 = f_numeric(x1)
             dfx = df_lambda(x1)
@@ -164,7 +163,7 @@ def newton_raphson(f, x0, epsilon):
             if abs(dfx) < 1e-10:
                 raise ValueError("f'(x) terlalu kecil")
             
-            x2 = x1 - fx1/dfx  # Rumus Newton
+            x2 = x1 - fx1/dfx
             fx2 = f_numeric(x2)
             
             iteration_data = {
@@ -179,13 +178,12 @@ def newton_raphson(f, x0, epsilon):
             }
             iterations.append(iteration_data)
             
-            if abs(fx2) < epsilon:  # Kriteria berhenti
+            if abs(fx2) < epsilon:
                 break
                 
             x1 = x2
             iteration += 1
-            if iteration > 100:
-                raise ValueError("Iterasi maksimum tercapai (100 iterasi)")
+            check_iteration_limit(iteration)
         
         return iterations, x2
         
@@ -200,17 +198,14 @@ def secant(f, x0, x1, epsilon):
         x_prev = float(x0)
         x_curr = float(x1)
         
-        # Evaluasi fungsi di titik awal
         f_prev = f_numeric(x_prev)
         f_curr = f_numeric(x_curr)
         
         iteration = 0
         while True:
-            # Cek pembagian dengan nol
             if abs(f_curr - f_prev) < 1e-10:
                 raise ValueError("Pembagian dengan nilai terlalu kecil")
             
-            # Hitung x berikutnya menggunakan rumus secant
             x_next = x_curr - f_curr * (x_curr - x_prev) / (f_curr - f_prev)
             f_next = f_numeric(x_next)
             
@@ -226,19 +221,17 @@ def secant(f, x0, x1, epsilon):
             }
             iterations.append(iteration_data)
             
-            # Kriteria konvergensi: selisih antara dua titik berurutan
-            if abs(x_next - x_curr) < epsilon:
+            # Kriteria konvergensi: nilai fungsi di x_next
+            if abs(f_next) < epsilon:
                 break
             
-            # Update nilai untuk iterasi berikutnya
             x_prev = x_curr
             x_curr = x_next
             f_prev = f_curr
             f_curr = f_next
             
             iteration += 1
-            if iteration > 100:
-                raise ValueError("Iterasi maksimum tercapai (100 iterasi)")
+            check_iteration_limit(iteration)
         
         return iterations, x_next
         
@@ -257,23 +250,21 @@ def calculate():
         method = data['method']
         epsilon = float(data['epsilon'])
         
-        if method == 'bisection':
-            x0 = float(data['x0'])
-            x1 = float(data['x1'])
-            iterations, root = interval_halving(function, x0, x1, epsilon)
-        elif method == 'regulafalsi':
-            x0 = float(data['x0'])
-            x1 = float(data['x1'])
-            iterations, root = regula_falsi(function, x0, x1, epsilon)
-        elif method == 'newton':
-            x0 = float(data['x0'])
-            iterations, root = newton_raphson(function, x0, epsilon)
-        elif method == 'secant':
-            x0 = float(data['x0'])
-            x1 = float(data['x1'])
-            iterations, root = secant(function, x0, x1, epsilon)
-        else:
+        method_functions = {
+            'bisection': interval_halving,
+            'regulafalsi': regula_falsi,
+            'newton': newton_raphson,
+            'secant': secant
+        }
+        
+        if method not in method_functions:
             raise ValueError("Metode tidak valid")
+            
+        func = method_functions[method]
+        if method in ['bisection', 'regulafalsi', 'secant']:
+            iterations, root = func(function, data['x0'], data['x1'], epsilon)
+        else:
+            iterations, root = func(function, data['x0'], epsilon)
         
         return jsonify({
             'success': True,

@@ -511,6 +511,24 @@
     <script>
         let chart = null;
 
+        // Mapping method ke input fields yang diperlukan
+        const methodInputs = {
+            'bisection': ['x0', 'x1'],
+            'regulafalsi': ['rf-x0', 'rf-x1'],
+            'newton': ['newton-x0'],
+            'secant': ['secant-x0', 'secant-x1']
+        };
+
+        // Fungsi untuk menampilkan error
+        function showError(message) {
+            document.getElementById('result').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    ${message}
+                </div>
+            `;
+        }
+
         document.getElementById('calculationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -518,33 +536,35 @@
             const functionInput = document.getElementById('function').value.trim();
             const epsilon = parseFloat(document.getElementById('epsilon').value);
             
-            // Get inputs based on selected method
-            let data = {
-                method: method,
+            // Validasi input dasar
+            if (!functionInput || isNaN(epsilon)) {
+                showError('Input tidak valid. Pastikan semua field terisi dengan benar.');
+                return;
+            }
+
+            // Kumpulkan data input
+            const data = {
+                method,
                 function: functionInput,
-                epsilon: epsilon
+                epsilon
             };
 
-            // Add appropriate inputs based on method
-            switch(method) {
-                case 'bisection':
-                    data.x0 = parseFloat(document.getElementById('x0').value);
-                    data.x1 = parseFloat(document.getElementById('x1').value);
-                    break;
-                case 'regulafalsi':
-                    data.x0 = parseFloat(document.getElementById('rf-x0').value);
-                    data.x1 = parseFloat(document.getElementById('rf-x1').value);
-                    break;
-                case 'newton':
-                    data.x0 = parseFloat(document.getElementById('newton-x0').value);
-                    break;
-                case 'secant':
-                    data.x0 = parseFloat(document.getElementById('secant-x0').value);
-                    data.x1 = parseFloat(document.getElementById('secant-x1').value);
-                    break;
+            // Tambahkan input sesuai method
+            const inputs = methodInputs[method];
+            if (!inputs) {
+                showError('Metode tidak valid');
+                return;
             }
 
             try {
+                inputs.forEach(inputId => {
+                    const value = parseFloat(document.getElementById(inputId).value);
+                    if (isNaN(value)) {
+                        throw new Error(`Input ${inputId} tidak valid`);
+                    }
+                    data[inputId.replace(/^[a-z]+-/, '')] = value;
+                });
+
                 const response = await fetch('/calculate', {
                     method: 'POST',
                     headers: {
@@ -560,20 +580,10 @@
                     updateTable(result.iterations, method);
                     updateGraph(result.iterations, data, method);
                 } else {
-                    document.getElementById('result').innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="bi bi-exclamation-triangle me-2"></i>
-                            ${result.error}
-                        </div>
-                    `;
+                    showError(result.error);
                 }
             } catch (error) {
-                document.getElementById('result').innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        Terjadi kesalahan: ${error.message}
-                    </div>
-                `;
+                showError(`Terjadi kesalahan: ${error.message}`);
             }
         });
 
@@ -606,6 +616,8 @@
                     `;
 
             result.iterations.forEach((iter, index) => {
+                const isLast = (index === result.iterations.length - 1);
+                let convergenceMsg = getConvergenceCheck(iter, method, isLast);
                 resultHTML += `
                     <div class="step-item mb-3 p-3" style="background: #e3f2fd; border-radius: 10px;">
                         <h6 class="text-primary mb-2">Iterasi ke-${index + 1}</h6>
@@ -714,7 +726,7 @@
                 resultHTML += `
                             <p class="mb-2">
                                 <strong> >> Pengecekan Konvergensi:</strong><br>
-                                ${getConvergenceCheck(iter, method)}
+                                ${convergenceMsg}
                             </p>
                         </div>
                     </div>
@@ -725,24 +737,45 @@
             document.getElementById('result').innerHTML = resultHTML;
         }
 
-        function getConvergenceCheck(iter, method) {
+        function getConvergenceCheck(iter, method, isLast = false) {
+            let isConverged = false;
+            let value = 0;
             switch(method) {
                 case 'bisection':
-                    return `|f(xᵢ)| = |${iter['f(c)'].toFixed(6)}| ${Math.abs(iter['f(c)']) < iter.epsilon ? 
-                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>` : 
-                        `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
+                    value = iter['f(c)'];
+                    isConverged = Math.abs(value) < iter.epsilon;
+                    break;
                 case 'regulafalsi':
-                    return `|f(xₜ)| = |${iter['f(xt)']?.toFixed(6) || 'undefined'}| ${iter['f(xt)'] && Math.abs(iter['f(xt)']) < iter.epsilon ? 
-                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xₜ)| lebih kecil dari toleransi ε</span>` : 
-                        `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`}`;
+                    value = iter['f(xt)'];
+                    isConverged = value !== undefined && Math.abs(value) < iter.epsilon;
+                    break;
                 case 'newton':
-                    return `|f(x₂)| = |${iter['f(x2)']?.toFixed(6) || 'undefined'}| ${iter['f(x2)'] && Math.abs(iter['f(x2)']) < iter.epsilon ? 
-                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(x₂)| lebih kecil dari toleransi ε</span>` : 
-                        `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi) <br> <span class="text-info">Karena hasil |f(x₂)| > ε, maka x₁ = x₂</span></span>`}`;
                 case 'secant':
-                    return `|f(x₂)| = |${iter['f(x2)']?.toFixed(6) || 'undefined'}| ${iter['f(x2)'] && Math.abs(iter['f(x2)']) < iter.epsilon ? 
-                        `<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(x₂)| lebih kecil dari toleransi ε</span>` : 
-                        `<span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi) <br> <span class="text-info">Karena hasil |f(x₂)| > ε, maka x₁ = x₂</span></span>`}`;
+                    value = iter['f(x2)'];
+                    isConverged = value !== undefined && Math.abs(value) < iter.epsilon;
+                    break;
+            }
+            if (isLast || isConverged) {
+                switch(method) {
+                    case 'bisection':
+                        return `|f(xᵢ)| = |${value?.toFixed(6) ?? 'undefined'}| <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xᵢ)| lebih kecil dari toleransi ε</span>`;
+                    case 'regulafalsi':
+                        return `|f(xₜ)| = |${value?.toFixed(6) ?? 'undefined'}| <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(xₜ)| lebih kecil dari toleransi ε</span>`;
+                    case 'newton':
+                    case 'secant':
+                        return `|f(x₂)| = |${value?.toFixed(6) ?? 'undefined'}| <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>< ε = ${iter.epsilon} <br> Iterasi berhenti: Nilai |f(x₂)| lebih kecil dari toleransi ε</span>`;
+                }
+            } else {
+                switch(method) {
+                    case 'bisection':
+                        return `|f(xᵢ)| = |${value?.toFixed(6) ?? 'undefined'}| <span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`;
+                    case 'regulafalsi':
+                        return `|f(xₜ)| = |${value?.toFixed(6) ?? 'undefined'}| <span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi)</span>`;
+                    case 'newton':
+                        return `|f(x₂)| = |${value?.toFixed(6) ?? 'undefined'}| <span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi) <br> <span class="text-info">Karena hasil |f(x₂)| ≥ ε, maka x₁ = x₂</span></span>`;
+                    case 'secant':
+                        return `|f(x₂)| = |${value?.toFixed(6) ?? 'undefined'}| <span class="text-warning"><i class="bi bi-exclamation-circle-fill me-1"></i>> ε = ${iter.epsilon} (Lanjut iterasi) <br> <span class="text-info">Karena hasil |f(x₂)| ≥ ε, maka x₁ = x₂</span></span>`;
+                }
             }
         }
 
@@ -1031,115 +1064,6 @@
             }
         });
 
-        // Function to evaluate mathematical expressions
-        function evaluateFunction(func, x) {
-            return math.evaluate(func, { x: x });
-        }
-
-        // Regula Falsi Method
-        function regulaFalsi(func, a, b, tolerance, maxIterations) {
-            let iterations = [];
-            let fa = evaluateFunction(func, a);
-            let fb = evaluateFunction(func, b);
-            
-            if (fa * fb >= 0) {
-                throw new Error("Fungsi harus memiliki tanda yang berbeda di titik a dan b");
-            }
-
-            for (let i = 0; i < maxIterations; i++) {
-                let c = (a * fb - b * fa) / (fb - fa);
-                let fc = evaluateFunction(func, c);
-                
-                iterations.push({
-                    iteration: i + 1,
-                    a: a,
-                    b: b,
-                    c: c,
-                    f_c: fc
-                });
-
-                if (Math.abs(fc) < tolerance) {
-                    return { root: c, iterations: iterations };
-                }
-
-                if (fa * fc < 0) {
-                    b = c;
-                    fb = fc;
-                } else {
-                    a = c;
-                    fa = fc;
-                }
-            }
-
-            return { root: (a + b) / 2, iterations: iterations };
-        }
-
-        // Newton Method
-        function newtonMethod(func, x0, tolerance, maxIterations) {
-            let iterations = [];
-            let x = x0;
-            
-            for (let i = 0; i < maxIterations; i++) {
-                let fx = evaluateFunction(func, x);
-                let dfx = math.derivative(func, 'x').evaluate({ x: x });
-                
-                if (Math.abs(dfx) < 1e-10) {
-                    throw new Error("Turunan mendekati nol, metode Newton tidak konvergen");
-                }
-
-                let x1 = x - fx / dfx;
-                iterations.push({
-                    iteration: i + 1,
-                    x: x,
-                    f_x: fx,
-                    x_new: x1
-                });
-
-                if (Math.abs(x1 - x) < tolerance) {
-                    return { root: x1, iterations: iterations };
-                }
-
-                x = x1;
-            }
-
-            return { root: x, iterations: iterations };
-        }
-
-        // Secant Method
-        function secantMethod(func, x0, x1, tolerance, maxIterations) {
-            let iterations = [];
-            let fx0 = evaluateFunction(func, x0);
-            let fx1 = evaluateFunction(func, x1);
-            
-            for (let i = 0; i < maxIterations; i++) {
-                if (Math.abs(fx1 - fx0) < 1e-10) {
-                    throw new Error("Pembagian dengan nol, metode Secant tidak konvergen");
-                }
-
-                let x2 = x1 - fx1 * (x1 - x0) / (fx1 - fx0);
-                let fx2 = evaluateFunction(func, x2);
-                
-                iterations.push({
-                    iteration: i + 1,
-                    x0: x0,
-                    x1: x1,
-                    x2: x2,
-                    f_x2: fx2
-                });
-
-                if (Math.abs(x2 - x1) < tolerance) {
-                    return { root: x2, iterations: iterations };
-                }
-
-                x0 = x1;
-                x1 = x2;
-                fx0 = fx1;
-                fx1 = fx2;
-            }
-
-            return { root: x1, iterations: iterations };
-        }
-
         // Add event listener for method change
         document.getElementById('method').addEventListener('change', function() {
             const method = this.value;
@@ -1174,32 +1098,6 @@
                     break;
             }
         });
-
-        // Function to get current method inputs
-        function getCurrentMethodInputs() {
-            const method = document.getElementById('method').value;
-            switch(method) {
-                case 'bisection':
-                    return {
-                        x0: parseFloat(document.getElementById('x0').value),
-                        x1: parseFloat(document.getElementById('x1').value)
-                    };
-                case 'regulafalsi':
-                    return {
-                        x0: parseFloat(document.getElementById('rf-x0').value),
-                        x1: parseFloat(document.getElementById('rf-x1').value)
-                    };
-                case 'newton':
-                    return {
-                        x0: parseFloat(document.getElementById('newton-x0').value)
-                    };
-                case 'secant':
-                    return {
-                        x0: parseFloat(document.getElementById('secant-x0').value),
-                        x1: parseFloat(document.getElementById('secant-x1').value)
-                    };
-            }
-        }
     </script>
 </body>
 </html>
